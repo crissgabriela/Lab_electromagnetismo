@@ -51,6 +51,11 @@ export default function SandboxCanvas({
   const [draggedProbe, setDraggedProbe] = useState<'red' | 'black' | null>(null);
   const [probeOffset, setProbeOffset] = useState({ x: 0, y: 0 });
 
+  // Voltmeter card dragging states
+  const [voltmeterPos, setVoltmeterPos] = useState({ x: 30, y: 25 });
+  const [isDraggingVoltmeter, setIsDraggingVoltmeter] = useState(false);
+  const [voltmeterDragOffset, setVoltmeterDragOffset] = useState({ x: 0, y: 0 });
+
   // Wiring state
   const [activeWiringStart, setActiveWiringStart] = useState<{
     terminalId: string;
@@ -139,6 +144,111 @@ export default function SandboxCanvas({
     return { cId, role };
   };
 
+  // Vertex dragging state
+  const [draggedVertex, setDraggedVertex] = useState<{ wireId: string; index: number } | null>(null);
+
+  // Helper: geometry segment distance calculation
+  const getDistanceToSegment = (px: number, py: number, x1: number, y1: number, x2: number, y2: number) => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    if (dx === 0 && dy === 0) return Math.hypot(px - x1, py - y1);
+    let t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy);
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * dx;
+    const projY = y1 + t * dy;
+    return Math.hypot(px - projX, py - projY);
+  };
+
+  // Helper: point and angle interpolator along polyline
+  const getPointAtLength = (p1: { x: number; y: number }, p2: { x: number; y: number }, pathPoints: { x: number; y: number }[] | undefined, t: number) => {
+    const pts = [p1, ...(pathPoints || []), p2];
+    
+    // If no intermediate points, use quadratic Bezier spline
+    if (!pathPoints || pathPoints.length === 0) {
+      const mx = (p1.x + p2.x) / 2;
+      const my = (p1.y + p2.y) / 2 + Math.min(30, Math.hypot(p2.x - p1.x, p2.y - p1.y) * 0.15);
+      const qx = (1 - t) * (1 - t) * p1.x + 2 * (1 - t) * t * mx + t * t * p2.x;
+      const qy = (1 - t) * (1 - t) * p1.y + 2 * (1 - t) * t * my + t * t * p2.y;
+      const tx = 2 * (1 - t) * (mx - p1.x) + 2 * t * (p2.x - mx);
+      const ty = 2 * (1 - t) * (my - p1.y) + 2 * t * (p2.y - my);
+      return { x: qx, y: qy, angle: Math.atan2(ty, tx) };
+    }
+    
+    // Polyline length calculations
+    let totalLength = 0;
+    const lengths: number[] = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = Math.hypot(pts[i+1].x - pts[i].x, pts[i+1].y - pts[i].y);
+      lengths.push(len);
+      totalLength += len;
+    }
+    
+    const targetLen = totalLength * t;
+    let accumulated = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const len = lengths[i];
+      if (accumulated + len >= targetLen || i === pts.length - 2) {
+        const localT = len > 0 ? (targetLen - accumulated) / len : 0;
+        const x = pts[i].x + (pts[i+1].x - pts[i].x) * localT;
+        const y = pts[i].y + (pts[i+1].y - pts[i].y) * localT;
+        const angle = Math.atan2(pts[i+1].y - pts[i].y, pts[i+1].x - pts[i].x);
+        return { x, y, angle };
+      }
+      accumulated += len;
+    }
+    return { x: p2.x, y: p2.y, angle: 0 };
+  };
+
+  // Helper: insert codo (vertex) on wire segment click and trigger drag
+  const handleWireMouseDown = (e: React.MouseEvent, w: Wire, p1: { x: number; y: number }, p2: { x: number; y: number }) => {
+    e.stopPropagation();
+    if (!canvasRef.current) return;
+    const rect = canvasRef.current.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    
+    const pts = [p1, ...(w.pathPoints || []), p2];
+    
+    let minDistance = Infinity;
+    let insertIndex = 0;
+    
+    for (let i = 0; i < pts.length - 1; i++) {
+      const dist = getDistanceToSegment(cx, cy, pts[i].x, pts[i].y, pts[i+1].x, pts[i+1].y);
+      if (dist < minDistance) {
+        minDistance = dist;
+        insertIndex = i;
+      }
+    }
+    
+    const snapToGrid = (val: number) => Math.round(val / 10) * 10;
+    const newPt = { x: snapToGrid(cx), y: snapToGrid(cy) };
+    
+    const currentPoints = w.pathPoints ? [...w.pathPoints] : [];
+    currentPoints.splice(insertIndex, 0, newPt);
+    
+    const updatedWires = wires.map(item => {
+      if (item.id === w.id) {
+        return { ...item, pathPoints: currentPoints };
+      }
+      return item;
+    });
+    onUpdateWires(updatedWires);
+    
+    setDraggedVertex({ wireId: w.id, index: insertIndex });
+  };
+
+  // Helper: delete codo (vertex)
+  const deleteVertex = (wireId: string, index: number) => {
+    const updatedWires = wires.map(w => {
+      if (w.id === wireId && w.pathPoints) {
+        const newPoints = w.pathPoints.filter((_, idx) => idx !== index);
+        return { ...w, pathPoints: newPoints };
+      }
+      return w;
+    });
+    onUpdateWires(updatedWires);
+  };
+
   // Capture canvas mouse coordinates
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!canvasRef.current) return;
@@ -162,6 +272,33 @@ export default function SandboxCanvas({
         return c;
       });
       onUpdateComponents(updated);
+    }
+
+    // Handle voltmeter drag
+    if (isDraggingVoltmeter) {
+      setVoltmeterPos({
+        x: Math.max(10, Math.min(800, x - voltmeterDragOffset.x)),
+        y: Math.max(10, Math.min(450, y - voltmeterDragOffset.y))
+      });
+    }
+
+    // Handle vertex drag
+    if (draggedVertex) {
+      const snapToGrid = (val: number) => Math.round(val / 10) * 10;
+      const updatedWires = wires.map(w => {
+        if (w.id === draggedVertex.wireId) {
+          const newPoints = w.pathPoints ? [...w.pathPoints] : [];
+          if (newPoints[draggedVertex.index]) {
+            newPoints[draggedVertex.index] = {
+              x: Math.max(20, Math.min(800, snapToGrid(x))),
+              y: Math.max(20, Math.min(450, snapToGrid(y)))
+            };
+          }
+          return { ...w, pathPoints: newPoints };
+        }
+        return w;
+      });
+      onUpdateWires(updatedWires);
     }
 
     // Handle probe drag
@@ -220,6 +357,8 @@ export default function SandboxCanvas({
   const handleMouseUp = () => {
     setDraggedComponentId(null);
     setDraggedProbe(null);
+    setIsDraggingVoltmeter(false);
+    setDraggedVertex(null);
     
     if (activeWiringStart) {
       // See if we released over a valid terminal
@@ -426,9 +565,15 @@ export default function SandboxCanvas({
           }
 
           // Let's make wires slightly slack/curved for tactile retro feel
-          const mx = (p1.x + p2.x) / 2;
-          const my = (p1.y + p2.y) / 2 + Math.min(30, Math.hypot(p2.x - p1.x, p2.y - p1.y) * 0.15); // Sagging wire!
-          const pathString = `M ${p1.x} ${p1.y} Q ${mx} ${my} ${p2.x} ${p2.y}`;
+          const hasPathPoints = w.pathPoints && w.pathPoints.length > 0;
+          let pathString = '';
+          if (hasPathPoints) {
+            pathString = `M ${p1.x} ${p1.y} ` + w.pathPoints!.map(pt => `L ${pt.x} ${pt.y}`).join(' ') + ` L ${p2.x} ${p2.y}`;
+          } else {
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2 + Math.min(30, Math.hypot(p2.x - p1.x, p2.y - p1.y) * 0.15); // Sagging wire!
+            pathString = `M ${p1.x} ${p1.y} Q ${mx} ${my} ${p2.x} ${p2.y}`;
+          }
 
           // Calculate current passing along this wire.
           // For visual speed rate, trace component currents on either side
@@ -445,7 +590,10 @@ export default function SandboxCanvas({
                 stroke="transparent"
                 strokeWidth="20"
                 className="hover:stroke-slate-100/10 cursor-alias"
-                onClick={(e) => {
+                onMouseDown={(e) => {
+                  handleWireMouseDown(e, w, p1, p2);
+                }}
+                onDoubleClick={(e) => {
                   e.stopPropagation();
                   deleteWire(w.id);
                 }}
@@ -492,21 +640,15 @@ export default function SandboxCanvas({
                 <g>
                   {/* Subtle arrows inside wire showing direction of Electric Field (E-field points from + to - potential) */}
                   {[0.25, 0.5, 0.75].map((tIdx, arrI) => {
-                    // Approximate point along quadratic spline
-                    const qx = (1 - tIdx) * (1 - tIdx) * p1.x + 2 * (1 - tIdx) * tIdx * mx + tIdx * tIdx * p2.x;
-                    const qy = (1 - tIdx) * (1 - tIdx) * p1.y + 2 * (1 - tIdx) * tIdx * my + tIdx * tIdx * p2.y;
-                    
-                    // Approximate derivative/tangent angle
-                    const tx = 2 * (1 - tIdx) * (mx - p1.x) + 2 * tIdx * (p2.x - mx);
-                    const ty = 2 * (1 - tIdx) * (my - p1.y) + 2 * tIdx * (p2.y - my);
-                    let angle = Math.atan2(ty, tx);
+                    const ptInfo = getPointAtLength(p1, p2, w.pathPoints, tIdx);
+                    let angle = ptInfo.angle;
 
                     if (vFrom < vTo) {
                       angle += Math.PI; // E points high -> low potential
                     }
 
                     return (
-                      <g key={arrI} transform={`translate(${qx}, ${qy}) rotate(${angle * 180 / Math.PI})`} className="opacity-80">
+                      <g key={arrI} transform={`translate(${ptInfo.x}, ${ptInfo.y}) rotate(${angle * 180 / Math.PI})`} className="opacity-80">
                         <line x1="-5" y1="0" x2="5" y2="0" stroke="#38bdf8" strokeWidth="1.5" />
                         <polygon points="5,0 1,3 1,-3" fill="#38bdf8" />
                       </g>
@@ -514,6 +656,35 @@ export default function SandboxCanvas({
                   })}
                 </g>
               )}
+
+              {/* Render visual codos (vertices) if they exist */}
+              {w.pathPoints && w.pathPoints.map((pt, idx) => (
+                <g key={idx} className="pointer-events-auto group/vertex">
+                  {/* Outer glow ring on hover */}
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={9}
+                    className="fill-transparent stroke-indigo-400/0 group-hover/vertex:stroke-indigo-400/30 group-hover/vertex:stroke-2 transition-all cursor-grab active:cursor-grabbing"
+                  />
+                  {/* Main handle dot */}
+                  <circle
+                    cx={pt.x}
+                    cy={pt.y}
+                    r={5.5}
+                    className="fill-indigo-500 stroke-slate-900 stroke-[1.5px] shadow group-hover/vertex:fill-cyan-400 group-hover/vertex:stroke-cyan-200 transition-all cursor-grab active:cursor-grabbing"
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      setDraggedVertex({ wireId: w.id, index: idx });
+                    }}
+                    onDoubleClick={(e) => {
+                      e.stopPropagation();
+                      deleteVertex(w.id, idx);
+                    }}
+                  />
+                  <title>Arrastra para mover codo. Doble clic para eliminar codo.</title>
+                </g>
+              ))}
             </g>
           );
         })}
@@ -537,7 +708,7 @@ export default function SandboxCanvas({
       <svg className="absolute inset-0 w-full h-full pointer-events-none z-30">
         {/* Red cable */}
         <path
-          d={`M 150 40 Q ${(150 + voltmeterRed.x)/2} ${(40 + voltmeterRed.y)/2 + 80} ${voltmeterRed.x} ${voltmeterRed.y}`}
+          d={`M ${voltmeterPos.x + 50} ${voltmeterPos.y + 135} Q ${(voltmeterPos.x + 50 + voltmeterRed.x)/2} ${(voltmeterPos.y + 135 + voltmeterRed.y)/2 + 80} ${voltmeterRed.x} ${voltmeterRed.y}`}
           fill="none"
           stroke="#f43f5e"
           strokeWidth="3.5"
@@ -545,7 +716,7 @@ export default function SandboxCanvas({
         />
         {/* Black cable */}
         <path
-          d={`M 150 40 Q ${(150 + voltmeterBlack.x)/2} ${(40 + voltmeterBlack.y)/2 + 80} ${voltmeterBlack.x} ${voltmeterBlack.y}`}
+          d={`M ${voltmeterPos.x + 142} ${voltmeterPos.y + 135} Q ${(voltmeterPos.x + 142 + voltmeterBlack.x)/2} ${(voltmeterPos.y + 135 + voltmeterBlack.y)/2 + 80} ${voltmeterBlack.x} ${voltmeterBlack.y}`}
           fill="none"
           stroke="#000000"
           strokeWidth="3.5"
@@ -813,12 +984,26 @@ export default function SandboxCanvas({
 
       {/* Floating Voltmeter Station */}
       <div 
-        style={{ left: '30px', top: '25px' }}
+        style={{ left: `${voltmeterPos.x}px`, top: `${voltmeterPos.y}px` }}
         className="absolute w-48 bg-slate-900/90 border border-cyan-500/35 backdrop-blur-md rounded-xl p-4 shadow-2xl z-30 font-sans text-slate-300 flex flex-col gap-3 pointer-events-auto shadow-[0_0_20px_rgba(6,182,212,0.15)] animate-fade-in"
       >
-        <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
-          <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee]" />
+        <div 
+          onMouseDown={(e) => {
+            e.stopPropagation();
+            setIsDraggingVoltmeter(true);
+            if (canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              setVoltmeterDragOffset({ 
+                x: e.clientX - rect.left - voltmeterPos.x, 
+                y: e.clientY - rect.top - voltmeterPos.y 
+              });
+            }
+          }}
+          className="flex items-center gap-2 border-b border-slate-800 pb-2 cursor-grab active:cursor-grabbing hover:bg-slate-800/40 p-1 rounded transition-colors select-none"
+        >
+          <div className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse" />
           <h4 className="text-[10px] font-bold uppercase tracking-wider text-cyan-500 font-mono">Multímetro DC</h4>
+          <span className="text-[7px] text-slate-500 font-mono ml-auto tracking-widest">MOVER</span>
         </div>
 
         {/* Dynamic Voltmeter potential readout screen */}

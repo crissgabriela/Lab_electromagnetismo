@@ -44,6 +44,7 @@ export interface Wire {
   id: string;
   fromTerminalId: string; // e.g., "comp1_term_a"
   toTerminalId: string;
+  pathPoints?: ElementPosition[];
 }
 
 export interface ElementPosition {
