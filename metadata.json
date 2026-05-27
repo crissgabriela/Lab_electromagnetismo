@@ -1,0 +1,6 @@
+{
+  "name": "Laboratorio de Electricidad Sandbox",
+  "description": "Laboratorio virtual interactivo para construir y simular circuitos de corriente continua (DC), analizando la ley de Ohm, Kirchhoff, capacitores electrolíticos y circuitos no óhmicos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
