@@ -65,6 +65,9 @@ export default function SandboxCanvas({
   } | null>(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
+  // Selected wire state
+  const [selectedWireId, setSelectedWireId] = useState<string | null>(null);
+
   // Terminal Position Lookup (used for drawing wires from exact global coordinates)
   const getTerminalGlobalPos = (c: CircuitComponent, termRole: string) => {
     // Determine offset relative to component center base on standard template sizes:
@@ -247,6 +250,46 @@ export default function SandboxCanvas({
       return w;
     });
     onUpdateWires(updatedWires);
+  };
+
+  // Helper: handle ghost node click and drag creation
+  const handleGhostMouseDown = (e: React.MouseEvent, w: Wire, index: number, mx: number, my: number) => {
+    e.stopPropagation();
+    
+    const snapToGrid = (val: number) => Math.round(val / 10) * 10;
+    const newPt = { x: snapToGrid(mx), y: snapToGrid(my) };
+    
+    const currentPoints = w.pathPoints ? [...w.pathPoints] : [];
+    currentPoints.splice(index, 0, newPt);
+    
+    const updatedWires = wires.map(item => {
+      if (item.id === w.id) {
+        return { ...item, pathPoints: currentPoints };
+      }
+      return item;
+    });
+    onUpdateWires(updatedWires);
+    
+    setDraggedVertex({ wireId: w.id, index });
+    setSelectedWireId(w.id);
+  };
+
+  // Helper: calculate wire geometric center for menu positioning
+  const getWireCenter = (w: Wire) => {
+    const fromComp = components.find(c => c.id === parseTerminalName(w.fromTerminalId).cId);
+    const toComp = components.find(c => c.id === parseTerminalName(w.toTerminalId).cId);
+    if (!fromComp || !toComp) return { x: 200, y: 200 };
+    const p1 = getTerminalGlobalPos(fromComp, parseTerminalName(w.fromTerminalId).role);
+    const p2 = getTerminalGlobalPos(toComp, parseTerminalName(w.toTerminalId).role);
+    const pts = [p1, ...(w.pathPoints || []), p2];
+    
+    let sumX = 0;
+    let sumY = 0;
+    pts.forEach(pt => {
+      sumX += pt.x;
+      sumY += pt.y;
+    });
+    return { x: sumX / pts.length, y: sumY / pts.length };
   };
 
   // Capture canvas mouse coordinates
@@ -488,6 +531,9 @@ export default function SandboxCanvas({
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
+      onMouseDown={() => {
+        setSelectedWireId(null);
+      }}
       className="relative flex-1 bg-[#0a0b0e] overflow-hidden h-full rounded-2xl border border-slate-800 shadow-[0_0_25px_rgba(0,0,0,0.5),_inset_0_0_40px_rgba(0,0,0,0.6)] cursor-default select-none"
     >
       {/* Visual background Grid */}
@@ -552,16 +598,27 @@ export default function SandboxCanvas({
           // Calculate visual wire coloring base on voltages
           const { vFrom, vTo, vAvg } = getWirePotentials(w);
           
-          // Interpolate custom wire color based on average potential
+          // Interpolate custom wire color based on average potential or custom override
           let wireColor = 'rgb(30,35,45)'; // Off potential
-          if (vAvg > 4.0) {
-            wireColor = '#e11d48'; // Bright Red/Rose for high voltage
-          } else if (vAvg > 1.0) {
-            wireColor = '#f59e0b'; // Amber/Orange for medium voltage
-          } else if (vAvg >= -0.05) {
-            wireColor = '#3b82f6'; // Blue for low/neutral positive potential
+          if (w.customColor && w.customColor !== 'auto') {
+            const colorPalette: Record<string, string> = {
+              red: '#ef4444',
+              black: '#1e293b',
+              blue: '#3b82f6',
+              green: '#10b981',
+              yellow: '#eab308'
+            };
+            wireColor = colorPalette[w.customColor] || '#ef4444';
           } else {
-            wireColor = '#8b5cf6'; // Violet for negative potentials
+            if (vAvg > 4.0) {
+              wireColor = '#e11d48'; // Bright Red/Rose for high voltage
+            } else if (vAvg > 1.0) {
+              wireColor = '#f59e0b'; // Amber/Orange for medium voltage
+            } else if (vAvg >= -0.05) {
+              wireColor = '#3b82f6'; // Blue for low/neutral positive potential
+            } else {
+              wireColor = '#8b5cf6'; // Violet for negative potentials
+            }
           }
 
           // Let's make wires slightly slack/curved for tactile retro feel
@@ -583,6 +640,18 @@ export default function SandboxCanvas({
 
           return (
             <g key={w.id} className="pointer-events-auto cursor-pointer">
+              {/* Selected wire highlight glow */}
+              {w.id === selectedWireId && (
+                <path
+                  d={pathString}
+                  fill="none"
+                  stroke="#6366f1"
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  opacity={0.65}
+                  className="animate-pulse"
+                />
+              )}
               {/* Thick transparent wire hitbox for easy clicking */}
               <path
                 d={pathString}
@@ -591,11 +660,14 @@ export default function SandboxCanvas({
                 strokeWidth="20"
                 className="hover:stroke-slate-100/10 cursor-alias"
                 onMouseDown={(e) => {
+                  e.stopPropagation();
+                  setSelectedWireId(w.id);
                   handleWireMouseDown(e, w, p1, p2);
                 }}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   deleteWire(w.id);
+                  setSelectedWireId(null);
                 }}
               />
               {/* Outer Wire Insulation jacket */}
@@ -681,10 +753,46 @@ export default function SandboxCanvas({
                       e.stopPropagation();
                       deleteVertex(w.id, idx);
                     }}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      deleteVertex(w.id, idx);
+                    }}
                   />
-                  <title>Arrastra para mover codo. Doble clic para eliminar codo.</title>
+                  <title>Arrastra para mover codo. Clic derecho o Doble clic para eliminar codo.</title>
                 </g>
               ))}
+
+              {/* Render ghost handles in the middle of each segment when wire is selected */}
+              {w.id === selectedWireId && (() => {
+                const pts = [p1, ...(w.pathPoints || []), p2];
+                return pts.slice(0, pts.length - 1).map((ptStart, i) => {
+                  const ptEnd = pts[i + 1];
+                  const gmx = (ptStart.x + ptEnd.x) / 2;
+                  const gmy = (ptStart.y + ptEnd.y) / 2;
+
+                  return (
+                    <g key={`ghost-${i}`} className="pointer-events-auto group/ghost z-40">
+                      {/* Interactive click area */}
+                      <circle
+                        cx={gmx}
+                        cy={gmy}
+                        r={8}
+                        className="fill-transparent stroke-transparent cursor-pointer"
+                      />
+                      {/* Visual indicator */}
+                      <circle
+                        cx={gmx}
+                        cy={gmy}
+                        r={4.5}
+                        className="fill-cyan-400/40 stroke-cyan-300/30 stroke-1 group-hover/ghost:fill-cyan-400 group-hover/ghost:stroke-cyan-200 group-hover/ghost:scale-125 transition-all cursor-crosshair opacity-75 group-hover/ghost:opacity-100"
+                        onMouseDown={(e) => handleGhostMouseDown(e, w, i, gmx, gmy)}
+                      />
+                      <title>Haz clic y arrastra para crear un nuevo codo aquí</title>
+                    </g>
+                  );
+                });
+              })()}
             </g>
           );
         })}

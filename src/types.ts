@@ -45,6 +45,7 @@ export interface Wire {
   fromTerminalId: string; // e.g., "comp1_term_a"
   toTerminalId: string;
   pathPoints?: ElementPosition[];
+  customColor?: 'auto' | 'red' | 'black' | 'blue' | 'green' | 'yellow';
 }
 
 export interface ElementPosition {
