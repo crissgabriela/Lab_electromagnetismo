@@ -211,7 +211,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       }
     }
 
-    // 2. Draw Coordinate Grid and Axes (With Enlarged, Crisp Numbers)
+    // 2. Draw Coordinate Grid and Axes (Large, Crisp Numbers)
     if (settings.showGrid) {
       ctx.lineWidth = 1;
       const stepMeters = coordRange <= 1.0 ? 0.25 : coordRange <= 2.0 ? 0.5 : 1.0;
@@ -238,8 +238,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
 
       // Major axes
       const { px: originX, py: originY } = mathToPixel(0, 0, width, height);
-      ctx.strokeStyle = 'rgba(148, 163, 184, 0.7)';
-      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.75)';
+      ctx.lineWidth = 2.0;
 
       ctx.beginPath();
       ctx.moveTo(0, originY);
@@ -251,8 +251,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.lineTo(originX, height);
       ctx.stroke();
 
-      // Axis numeric tick labels (Enlarged and high contrast)
-      ctx.font = 'bold 13px "JetBrains Mono", monospace';
+      // Axis numeric tick labels (Enlarged to 16px bold)
+      ctx.font = 'bold 16px "JetBrains Mono", monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
 
@@ -263,49 +263,50 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
 
         if (Math.abs(val) > 1e-5) {
           // X ticks
-          ctx.strokeStyle = 'rgba(203, 213, 225, 0.8)';
+          ctx.strokeStyle = 'rgba(203, 213, 225, 0.9)';
+          ctx.lineWidth = 1.5;
           ctx.beginPath();
-          ctx.moveTo(px, originY - 4);
-          ctx.lineTo(px, originY + 4);
+          ctx.moveTo(px, originY - 5);
+          ctx.lineTo(px, originY + 5);
           ctx.stroke();
 
           // X label with shadow
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-          ctx.shadowBlur = 4;
-          ctx.fillStyle = '#f8fafc';
-          ctx.fillText(`${val.toFixed(2)}`, px, originY + 8);
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+          ctx.shadowBlur = 5;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(`${val.toFixed(2)}`, px, originY + 9);
           ctx.shadowBlur = 0;
 
           // Y ticks
           ctx.beginPath();
-          ctx.moveTo(originX - 4, py);
-          ctx.lineTo(originX + 4, py);
+          ctx.moveTo(originX - 5, py);
+          ctx.lineTo(originX + 5, py);
           ctx.stroke();
 
           // Y label with shadow
           ctx.save();
           ctx.textAlign = 'right';
           ctx.textBaseline = 'middle';
-          ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
-          ctx.shadowBlur = 4;
-          ctx.fillStyle = '#f8fafc';
-          ctx.fillText(`${val.toFixed(2)}`, originX - 8, py);
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.95)';
+          ctx.shadowBlur = 5;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(`${val.toFixed(2)}`, originX - 10, py);
           ctx.restore();
         }
       }
 
-      // Axis Titles (Enlarged and bold)
+      // Axis Titles (Enlarged to 16px bold)
       ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 14px Inter, sans-serif';
+      ctx.font = 'bold 16px Inter, sans-serif';
       ctx.textAlign = 'right';
-      ctx.fillText('x [m]', width - 20, originY - 18);
+      ctx.fillText('x [m]', width - 20, originY - 20);
       ctx.textAlign = 'left';
-      ctx.fillText('y [m]', originX + 18, 20);
+      ctx.fillText('y [m]', originX + 20, 24);
     }
 
-    // 3. Draw Vector Grid (Significantly Enlarged and Prominent Field Arrows)
+    // 3. Draw Vector Grid (Enlarged and Prominent Field Arrows)
     if (settings.showVectorGrid && charges.length > 0) {
-      const gridSpacing = 50; // Spacing in pixels
+      const gridSpacing = 50;
       const xCount = Math.floor(width / gridSpacing);
       const yCount = Math.floor(height / gridSpacing);
 
@@ -332,7 +333,6 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
           const dirX = field.x / mag;
           const dirY = field.y / mag;
 
-          // Significantly enlarged arrow length (18px to 42px)
           const arrowLen = Math.min(42, Math.max(18, Math.log10(mag + 1) * 6.5));
           const endPx = px + dirX * arrowLen;
           const endPy = py - dirY * arrowLen;
@@ -348,7 +348,6 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
           ctx.lineTo(endPx, endPy);
           ctx.stroke();
 
-          // Prominent Arrowhead
           const headLen = 8.5;
           const angle = Math.atan2(-(endPy - py), endPx - px);
           ctx.beginPath();
@@ -420,7 +419,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       });
     }
 
-    // 5. Draw Individual Charge Contribution Field Vectors at Test Point (Large & Clear)
+    // 5. Draw Individual Charge Contribution Field Vectors at Test Point
     const { px: tpPx, py: tpPy } = mathToPixel(tpX, tpY, width, height);
 
     if (settings.showIndividualVectors && calculation.chargesCalculations.length > 0) {
@@ -433,7 +432,6 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         const arrowDy = -calc.electricField.y * vScale;
 
         const displayLen = Math.sqrt(arrowDx * arrowDx + arrowDy * arrowDy);
-        // Significantly enlarged vector length for prominent visibility (60px to 190px)
         const clampedLen = Math.min(190, Math.max(60, displayLen * 2.2));
         const dirAngle = Math.atan2(arrowDy, arrowDx);
 
@@ -466,19 +464,19 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         ctx.closePath();
         ctx.fill();
 
-        // Vector Label Pill (Without combining unicode to avoid square box glyphs)
+        // Vector Label Pill (Large font 14px)
         const vecLabel = `E_${calc.charge.name || `q${idx + 1}`}`;
-        ctx.font = 'bold 12px "JetBrains Mono", monospace';
+        ctx.font = 'bold 14px "JetBrains Mono", monospace';
         const lblW = ctx.measureText(vecLabel).width;
 
-        const lblX = endX + Math.cos(dirAngle) * 12;
-        const lblY = endY + Math.sin(dirAngle) * 12;
+        const lblX = endX + Math.cos(dirAngle) * 14;
+        const lblY = endY + Math.sin(dirAngle) * 14;
 
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
         ctx.strokeStyle = isPos ? '#ef4444' : '#3b82f6';
-        ctx.lineWidth = 1.2;
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
-        ctx.roundRect(lblX - lblW / 2 - 5, lblY - 9, lblW + 10, 18, 4);
+        ctx.roundRect(lblX - lblW / 2 - 6, lblY - 11, lblW + 12, 22, 5);
         ctx.fill();
         ctx.stroke();
 
@@ -490,14 +488,13 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       });
     }
 
-    // 6. Draw Total Net Electric Field Vector E_total at Test Point (Prominent & Large)
+    // 6. Draw Total Net Electric Field Vector E_total at Test Point
     if (settings.showTotalVector && calculation.totalFieldMagnitude > 1e-12) {
       const vScale = (settings.vectorScale || 1.0) * 0.00003;
       const arrowDx = calculation.totalElectricField.x * vScale;
       const arrowDy = -calculation.totalElectricField.y * vScale;
 
       const displayLen = Math.sqrt(arrowDx * arrowDx + arrowDy * arrowDy);
-      // Large prominent net vector (80px to 240px)
       const clampedLen = Math.min(240, Math.max(80, displayLen * 2.6));
       const dirAngle = Math.atan2(arrowDy, arrowDx);
 
@@ -507,8 +504,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.save();
       ctx.shadowColor = 'rgba(16, 185, 129, 0.95)';
       ctx.shadowBlur = 16;
-      ctx.strokeStyle = '#10b981'; // Bright Emerald Green
-      ctx.lineWidth = 4.5;
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 4.8;
 
       ctx.beginPath();
       ctx.moveTo(tpPx, tpPy);
@@ -516,7 +513,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.stroke();
 
       ctx.fillStyle = '#10b981';
-      const headSize = 13;
+      const headSize = 14;
       ctx.beginPath();
       ctx.moveTo(endX, endY);
       ctx.lineTo(
@@ -530,20 +527,20 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.closePath();
       ctx.fill();
 
-      // Total Vector Label Badge (Clean text without combining glyphs)
+      // Total Vector Label Badge (Large font 15px)
       ctx.shadowBlur = 0;
       const totLabel = 'E_total';
-      ctx.font = 'bold 13px "JetBrains Mono", monospace';
+      ctx.font = 'bold 15px "JetBrains Mono", monospace';
       const totW = ctx.measureText(totLabel).width;
 
-      const lblX = endX + Math.cos(dirAngle) * 14;
-      const lblY = endY + Math.sin(dirAngle) * 14;
+      const lblX = endX + Math.cos(dirAngle) * 16;
+      const lblY = endY + Math.sin(dirAngle) * 16;
 
       ctx.fillStyle = 'rgba(6, 78, 59, 0.95)';
       ctx.strokeStyle = '#10b981';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.roundRect(lblX - totW / 2 - 6, lblY - 11, totW + 12, 22, 5);
+      ctx.roundRect(lblX - totW / 2 - 8, lblY - 13, totW + 16, 26, 6);
       ctx.fill();
       ctx.stroke();
 
@@ -554,58 +551,55 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.restore();
     }
 
-    // 7. Draw Test Point Indicator P(r0) (Clean, Glowing, Zero Occlusion)
+    // 7. Draw Test Point Indicator P(r0)
     ctx.save();
-    // Glowing Outer Target Ring
     ctx.shadowColor = 'rgba(245, 158, 11, 0.95)';
     ctx.shadowBlur = 12;
     ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 2.8;
+    ctx.lineWidth = 3.0;
     ctx.beginPath();
-    ctx.arc(tpPx, tpPy, 12, 0, Math.PI * 2);
+    ctx.arc(tpPx, tpPy, 13, 0, Math.PI * 2);
     ctx.stroke();
 
-    // Crosshairs
     ctx.beginPath();
-    ctx.moveTo(tpPx - 18, tpPy);
-    ctx.lineTo(tpPx + 18, tpPy);
-    ctx.moveTo(tpPx, tpPy - 18);
-    ctx.lineTo(tpPx, tpPy + 18);
+    ctx.moveTo(tpPx - 20, tpPy);
+    ctx.lineTo(tpPx + 20, tpPy);
+    ctx.moveTo(tpPx, tpPy - 20);
+    ctx.lineTo(tpPx, tpPy + 20);
     ctx.stroke();
 
-    // Center Bright Dot
     ctx.fillStyle = '#fbbf24';
     ctx.beginPath();
-    ctx.arc(tpPx, tpPy, 4.5, 0, Math.PI * 2);
+    ctx.arc(tpPx, tpPy, 5.0, 0, Math.PI * 2);
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Clean Floating Tag Pill for Point P (Placed above the reticle)
+    // Clean Floating Tag Pill for Point P (14px font)
     const pTag = 'P (r₀)';
-    ctx.font = 'bold 12px Inter, sans-serif';
+    ctx.font = 'bold 14px Inter, sans-serif';
     const tagW = ctx.measureText(pTag).width;
     ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
     ctx.strokeStyle = '#f59e0b';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.6;
     ctx.beginPath();
-    ctx.roundRect(tpPx - tagW / 2 - 6, tpPy - 32, tagW + 12, 20, 6);
+    ctx.roundRect(tpPx - tagW / 2 - 8, tpPy - 36, tagW + 16, 24, 6);
     ctx.fill();
     ctx.stroke();
 
     ctx.fillStyle = '#fbbf24';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(pTag, tpPx, tpPy - 22);
+    ctx.fillText(pTag, tpPx, tpPy - 24);
     ctx.restore();
 
-    // 8. Draw Point Charges (With Enlarged, Crisp Labels)
+    // 8. Draw Point Charges (Enlarged to 16px bold)
     charges.forEach((c) => {
       const { px, py } = mathToPixel(c.x, c.y, width, height);
       const isPos = c.q > 0;
       const isNeg = c.q < 0;
       const isSelected = selectedChargeId === c.id;
 
-      const baseRadius = 15 + Math.min(8, Math.abs(c.q) * 2);
+      const baseRadius = 16 + Math.min(8, Math.abs(c.q) * 2);
 
       ctx.save();
 
@@ -630,10 +624,10 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       // Selection ring
       if (isSelected) {
         ctx.strokeStyle = '#facc15';
-        ctx.lineWidth = 2.8;
+        ctx.lineWidth = 3.0;
         ctx.setLineDash([4, 3]);
         ctx.beginPath();
-        ctx.arc(px, py, baseRadius + 7, 0, Math.PI * 2);
+        ctx.arc(px, py, baseRadius + 8, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
       }
@@ -641,7 +635,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       // Charge Sphere Body
       ctx.fillStyle = isPos ? '#ef4444' : isNeg ? '#3b82f6' : '#64748b';
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.2;
+      ctx.lineWidth = 2.4;
       ctx.beginPath();
       ctx.arc(px, py, baseRadius, 0, Math.PI * 2);
       ctx.fill();
@@ -649,29 +643,29 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
 
       // Charge Sign Symbol (+ / -)
       ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 18px Inter, sans-serif';
+      ctx.font = 'bold 20px Inter, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(isPos ? '+' : isNeg ? '−' : '0', px, py);
 
-      // Charge Name & Value Label Card (Enlarged text and clean padding)
+      // Charge Name & Value Label Card (15px bold font)
       if (settings.showLabels) {
         const cLabel = `${c.name || 'q'}: ${c.q > 0 ? `+${c.q}` : c.q} ${c.unit}`;
-        ctx.font = 'bold 13px "JetBrains Mono", monospace';
+        ctx.font = 'bold 15px "JetBrains Mono", monospace';
         const cTextWidth = ctx.measureText(cLabel).width;
 
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
-        ctx.strokeStyle = isPos ? 'rgba(239, 68, 68, 0.6)' : 'rgba(59, 130, 246, 0.6)';
-        ctx.lineWidth = 1.2;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.strokeStyle = isPos ? 'rgba(239, 68, 68, 0.7)' : 'rgba(59, 130, 246, 0.7)';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
-        ctx.roundRect(px - cTextWidth / 2 - 8, py + baseRadius + 6, cTextWidth + 16, 22, 5);
+        ctx.roundRect(px - cTextWidth / 2 - 9, py + baseRadius + 7, cTextWidth + 18, 25, 6);
         ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#f8fafc';
+        ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(cLabel, px, py + baseRadius + 17);
+        ctx.fillText(cLabel, px, py + baseRadius + 19);
       }
 
       ctx.restore();
@@ -796,7 +790,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
   return (
     <div 
       ref={containerRef}
-      className="relative w-full flex flex-col gap-3.5 select-none"
+      className="relative w-full flex flex-col gap-4 select-none"
     >
       {/* 2D Canvas Viewport with Expanded Height */}
       <div className="relative w-full h-[560px] md:h-[620px] lg:h-[680px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
@@ -839,7 +833,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         <div className="absolute top-4 right-4 flex items-center gap-2">
           <button
             onClick={() => onUpdateTestPointPos(0, 0)}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold backdrop-blur-md transition shadow-md"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold backdrop-blur-md transition shadow-md"
             title="Fijar Punto de Prueba en el Origen (0,0)"
           >
             <Crosshair className="w-4 h-4" />
@@ -848,66 +842,66 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         </div>
 
         {/* Cursor Probe Hover Bar (Bottom Overlay) */}
-        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-800/80 text-xs text-slate-300 font-mono shadow-lg">
+        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-800/80 text-xs sm:text-sm text-slate-200 font-mono shadow-xl">
           <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 text-indigo-400 font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              Sonda en Cursor:
+            <span className="flex items-center gap-1.5 text-indigo-400 font-bold">
+              <Sparkles className="w-4 h-4" />
+              Sonda Cursor:
             </span>
             {hoveredCoord && (
-              <span className="text-slate-200 font-medium">
+              <span className="text-slate-100 font-semibold">
                 ({hoveredCoord.x.toFixed(2)}, {hoveredCoord.y.toFixed(2)}) m
               </span>
             )}
             {hoveredMetrics && (
               <>
-                <span className="text-emerald-400 font-medium">
-                  |E⃗|: {formatPhysicsValue(hoveredMetrics.eMag, 'N/C', sci, 2)}
+                <span className="text-emerald-400 font-bold">
+                  |E|: {formatPhysicsValue(hoveredMetrics.eMag, 'N/C', sci, 2)}
                 </span>
-                <span className="text-cyan-400 font-medium">
+                <span className="text-cyan-400 font-bold">
                   V: {formatPhysicsValue(hoveredMetrics.v, 'V', sci, 2)}
                 </span>
               </>
             )}
           </div>
 
-          <div className="text-[11px] text-slate-400 hidden sm:inline">
+          <div className="text-xs text-slate-400 hidden sm:inline">
             Arrastra P o cargas • Doble clic para reubicar P
           </div>
         </div>
       </div>
 
-      {/* Prominent High-Contrast Punto P HUD Display Card */}
-      <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-4 shadow-xl grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      {/* Prominent High-Contrast Punto P HUD Display Card (Enlarged) */}
+      <div className="bg-slate-900/90 border border-slate-800/90 rounded-2xl p-5 shadow-2xl grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Metric 1: Position */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-amber-500/40">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 shadow-inner">
-            <Compass className="w-5 h-5" />
+        <div className="flex items-center gap-3.5 bg-slate-950/80 p-4 rounded-xl border border-amber-500/40 shadow-md">
+          <div className="p-3 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 shadow-inner">
+            <Compass className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-wider">
               Punto de Prueba (r₀)
             </div>
-            <div className="text-base font-extrabold font-mono text-slate-100">
+            <div className="text-lg font-black font-mono text-slate-100 mt-0.5">
               ({tpX.toFixed(2)}, {tpY.toFixed(2)}) m
             </div>
           </div>
         </div>
 
         {/* Metric 2: Electric Field at P */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-emerald-500/40">
-          <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0 shadow-inner">
-            <Zap className="w-5 h-5" />
+        <div className="flex items-center gap-3.5 bg-slate-950/80 p-4 rounded-xl border border-emerald-500/40 shadow-md">
+          <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-400 shrink-0 shadow-inner">
+            <Zap className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-[11px] font-bold text-emerald-400 uppercase tracking-wider">
-              Campo Eléctrico Total E⃗(r₀)
+            <div className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              Campo Eléctrico Total E(r₀)
             </div>
-            <div className="text-base font-extrabold font-mono text-emerald-300">
+            <div className="text-lg font-black font-mono text-emerald-300 mt-0.5">
               {formatPhysicsValue(calculation.totalFieldMagnitude, 'N/C', sci, 3)}
             </div>
             {calculation.fieldAngle2D !== undefined && (
-              <div className="text-[11px] text-slate-400 font-mono font-medium">
+              <div className="text-xs text-slate-300 font-mono font-medium">
                 Dirección θ = {calculation.fieldAngle2D.toFixed(1)}°
               </div>
             )}
@@ -915,18 +909,18 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         </div>
 
         {/* Metric 3: Electric Potential at P */}
-        <div className="flex items-center gap-3 bg-slate-950/80 p-3.5 rounded-xl border border-cyan-500/40">
-          <div className="p-2.5 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0 shadow-inner">
-            <Layers className="w-5 h-5" />
+        <div className="flex items-center gap-3.5 bg-slate-950/80 p-4 rounded-xl border border-cyan-500/40 shadow-md">
+          <div className="p-3 rounded-xl bg-cyan-500/20 text-cyan-400 shrink-0 shadow-inner">
+            <Layers className="w-6 h-6" />
           </div>
           <div>
-            <div className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider">
+            <div className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
               Potencial Eléctrico Total V(r₀)
             </div>
-            <div className="text-base font-extrabold font-mono text-cyan-300">
+            <div className="text-lg font-black font-mono text-cyan-300 mt-0.5">
               {formatPhysicsValue(calculation.totalPotential, 'V', sci, 3)}
             </div>
-            <div className="text-[11px] text-slate-400 font-medium">
+            <div className="text-xs text-slate-300 font-medium">
               {calculation.totalPotential > 0 ? '+ Positivo' : calculation.totalPotential < 0 ? '- Negativo' : '0 Nulo'}
             </div>
           </div>
