@@ -171,16 +171,9 @@ Número de Cargas: ${chargesCalculations.length}
             <Calculator className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-xl font-bold text-slate-100">
-                Resultados Analíticos y Desglose Paso a Paso
-              </h3>
-              {activePresetTitle && (
-                <span className="text-xs px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-semibold">
-                  {activePresetTitle}
-                </span>
-              )}
-            </div>
+            <h3 className="text-xl font-bold text-slate-100">
+              Resultados Analíticos y Desglose Paso a Paso
+            </h3>
             <p className="text-sm text-slate-400 mt-1">
               Evaluación en el Punto de Prueba{' '}
               <span className="text-amber-300 font-mono font-bold text-sm">
