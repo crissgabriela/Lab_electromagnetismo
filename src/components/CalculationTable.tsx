@@ -184,18 +184,6 @@ Número de Cargas: ${chargesCalculations.length}
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          {/* Scientific notation switch */}
-          <button
-            onClick={() => onUpdateSettings({ scientificNotation: !sci })}
-            className={`px-3.5 py-2 text-xs rounded-xl font-semibold transition-all border ${
-              sci
-                ? 'bg-purple-600/20 text-purple-300 border-purple-500/40 shadow-sm'
-                : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:text-white'
-            }`}
-            title="Alternar entre notación científica y decimal"
-          >
-            {sci ? 'Notación: Científica (10ⁿ)' : 'Notación: Estándar'}
-          </button>
 
           {/* Copy summary button */}
           <button

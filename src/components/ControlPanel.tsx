@@ -81,20 +81,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
     });
   };
 
-  const handleTestPointStep = (axis: 'x' | 'y' | 'z', delta: number) => {
-    const curVal = axis === 'x' ? tpX : axis === 'y' ? tpY : tpZ;
-    const newVal = Math.round((curVal + delta) * 100) / 100;
-    onUpdateTestPoint({
-      x: axis === 'x' ? newVal : tpX,
-      y: axis === 'y' ? newVal : tpY,
-      z: axis === 'z' ? newVal : tpZ,
-    });
-  };
-
   return (
-    <div className="bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 shadow-2xl backdrop-blur-xl flex flex-col gap-5">
+    <div className="h-full bg-slate-900/90 border border-slate-800/80 rounded-2xl p-5 shadow-2xl backdrop-blur-xl flex flex-col gap-5 justify-start">
       {/* Top Bar: Dimension Selector 2D vs 3D */}
-      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-2">
           <div className="p-2.5 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-indigo-400">
             <Sliders className="w-4 h-4" />
@@ -130,7 +120,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       </div>
 
       {/* Tabs Selector: 3 Dedicated Tabs */}
-      <div className="grid grid-cols-3 gap-2 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800/80 text-xs font-semibold">
+      <div className="grid grid-cols-3 gap-2 bg-slate-950/70 p-1.5 rounded-xl border border-slate-800/80 text-xs font-semibold shrink-0">
         <button
           onClick={() => setActiveTab('charges')}
           className={`flex items-center justify-center gap-2 py-2.5 px-2 rounded-xl transition ${
@@ -168,11 +158,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </button>
       </div>
 
-      {/* Tab 1: Charges Management (Spacious & Comfortable Inputs) */}
+      {/* Tab 1: Charges Management */}
       {activeTab === 'charges' && (
-        <div className="space-y-4">
+        <div className="space-y-4 flex-1 flex flex-col min-h-0">
           {/* Add charge buttons */}
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5 shrink-0">
             <button
               onClick={() => handleAddNewCharge(true)}
               className="flex items-center justify-center gap-2 px-3 py-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/40 text-xs font-bold transition shadow-sm"
@@ -189,13 +179,15 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </button>
           </div>
 
-          {/* Unit selector */}
-          <div className="flex items-center justify-between text-xs text-slate-300 bg-slate-950/70 p-3 rounded-xl border border-slate-800 font-medium">
-            <span className="font-semibold text-slate-300">Unidad de Carga:</span>
+          {/* Unit selector with single-line label on top */}
+          <div className="space-y-1.5 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800 shrink-0">
+            <label className="text-xs font-bold text-slate-200 block">
+              Unidad de Carga:
+            </label>
             <select
               value={settings.chargeUnit}
               onChange={(e) => onUpdateSettings({ chargeUnit: e.target.value as ChargeUnit })}
-              className="bg-slate-800 text-slate-100 text-xs rounded-lg px-3 py-1.5 border border-slate-700 focus:outline-none focus:border-indigo-500 font-mono font-bold"
+              className="w-full bg-slate-800 text-slate-100 text-xs rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 font-mono font-bold"
             >
               <option value="e">Carga elemental (e = 1.602×10⁻¹⁹ C)</option>
               <option value="uC">Microcoulombs (µC = 10⁻⁶ C)</option>
@@ -204,10 +196,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </select>
           </div>
 
-          {/* Charges List (Enlarged and Spacious Input Cards) */}
-          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          {/* Charges List */}
+          <div className="space-y-3 flex-1 overflow-y-auto pr-1">
             {charges.length === 0 ? (
-              <div className="text-center py-8 text-slate-500 text-xs">
+              <div className="text-center py-10 text-slate-500 text-xs">
                 No hay cargas en el sistema. Haz clic en "Agregar Carga" para comenzar.
               </div>
             ) : (
@@ -335,9 +327,9 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
         </div>
       )}
 
-      {/* Tab 2: Test Point Position (Rock-Solid & Spacious Controls) */}
+      {/* Tab 2: Test Point Position (Clean, Spacious, No LaTeX syntax, No Step Buttons, No Position Chips) */}
       {activeTab === 'testpoint' && (
-        <div className="space-y-5">
+        <div className="space-y-5 flex-1 flex flex-col">
           <div className="bg-slate-950/70 p-5 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
             <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
               <span className="text-xs font-extrabold text-amber-400 flex items-center gap-2 uppercase tracking-wider">
@@ -346,7 +338,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </span>
               <button
                 onClick={() => onUpdateTestPoint({ x: 0, y: 0, z: 0 })}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/40 transition shadow-sm"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-bold border border-amber-500/40 transition shadow-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 Origen (0,0)
@@ -354,11 +346,11 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Modifica las coordenadas en metros del punto de evaluación $P(r_0)$ para calcular el campo eléctrico y potencial eléctrico en tiempo real.
+              Modifica las coordenadas en metros del punto de evaluación P (r₀) para calcular el campo eléctrico y potencial eléctrico en tiempo real.
             </p>
 
-            {/* Coordinate Inputs: Spacious & Direct */}
-            <div className="grid grid-cols-3 gap-3 font-mono">
+            {/* Clean, Large Coordinate Inputs */}
+            <div className="grid grid-cols-3 gap-3 font-mono pt-2">
               {/* X0 Coordinate */}
               <div className="space-y-1.5">
                 <label className="text-slate-400 block text-xs font-bold text-center">x₀ [metros]</label>
@@ -367,22 +359,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   step="0.05"
                   value={tpX}
                   onChange={(e) => handleTestPointCoordChange('x', e.target.value)}
-                  className="w-full bg-slate-800 text-slate-100 text-base font-black px-2 py-2.5 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                  className="w-full bg-slate-800 text-slate-100 text-lg font-black px-2 py-3 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
-                <div className="flex gap-1 justify-center">
-                  <button
-                    onClick={() => handleTestPointStep('x', -0.1)}
-                    className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                  >
-                    -0.1
-                  </button>
-                  <button
-                    onClick={() => handleTestPointStep('x', 0.1)}
-                    className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                  >
-                    +0.1
-                  </button>
-                </div>
               </div>
 
               {/* Y0 Coordinate */}
@@ -393,22 +371,8 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   step="0.05"
                   value={tpY}
                   onChange={(e) => handleTestPointCoordChange('y', e.target.value)}
-                  className="w-full bg-slate-800 text-slate-100 text-base font-black px-2 py-2.5 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                  className="w-full bg-slate-800 text-slate-100 text-lg font-black px-2 py-3 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                 />
-                <div className="flex gap-1 justify-center">
-                  <button
-                    onClick={() => handleTestPointStep('y', -0.1)}
-                    className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                  >
-                    -0.1
-                  </button>
-                  <button
-                    onClick={() => handleTestPointStep('y', 0.1)}
-                    className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                  >
-                    +0.1
-                  </button>
-                </div>
               </div>
 
               {/* Z0 Coordinate */}
@@ -420,27 +384,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                     step="0.05"
                     value={tpZ}
                     onChange={(e) => handleTestPointCoordChange('z', e.target.value)}
-                    className="w-full bg-slate-800 text-slate-100 text-base font-black px-2 py-2.5 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
+                    className="w-full bg-slate-800 text-slate-100 text-lg font-black px-2 py-3 rounded-xl border border-slate-700 text-center focus:border-amber-500 focus:ring-1 focus:ring-amber-500 focus:outline-none"
                   />
-                  <div className="flex gap-1 justify-center">
-                    <button
-                      onClick={() => handleTestPointStep('z', -0.1)}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                    >
-                      -0.1
-                    </button>
-                    <button
-                      onClick={() => handleTestPointStep('z', 0.1)}
-                      className="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-bold"
-                    >
-                      +0.1
-                    </button>
-                  </div>
                 </div>
               ) : (
                 <div className="space-y-1.5 opacity-60">
                   <label className="text-slate-400 block text-xs font-bold text-center">z₀ [metros]</label>
-                  <div className="w-full bg-slate-800/40 text-slate-400 text-base font-black py-2.5 px-2 rounded-xl border border-slate-800 text-center">
+                  <div className="w-full bg-slate-800/40 text-slate-400 text-lg font-black py-3 px-2 rounded-xl border border-slate-800 text-center">
                     0.00
                   </div>
                   <div className="text-[10px] text-center text-slate-500 font-semibold">
@@ -449,50 +399,13 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </div>
               )}
             </div>
-
-            {/* Quick Position Presets */}
-            <div className="pt-3 border-t border-slate-800/80 space-y-2">
-              <span className="text-xs text-slate-300 font-bold block">Atajos de posición rápida:</span>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => onUpdateTestPoint({ x: 0, y: 0, z: 0 })}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono font-bold border border-slate-700 shadow-sm"
-                >
-                  (0.00, 0.00)
-                </button>
-                <button
-                  onClick={() => onUpdateTestPoint({ x: 0, y: 0.5, z: is3D ? tpZ : 0 })}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono font-bold border border-slate-700 shadow-sm"
-                >
-                  (0.00, 0.50)
-                </button>
-                <button
-                  onClick={() => onUpdateTestPoint({ x: 0.5, y: 0, z: is3D ? tpZ : 0 })}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono font-bold border border-slate-700 shadow-sm"
-                >
-                  (0.50, 0.00)
-                </button>
-                <button
-                  onClick={() => onUpdateTestPoint({ x: 0.25, y: 0.25, z: is3D ? 0.25 : 0 })}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono font-bold border border-slate-700 shadow-sm"
-                >
-                  (0.25, 0.25)
-                </button>
-                <button
-                  onClick={() => onUpdateTestPoint({ x: -0.25, y: -0.25, z: is3D ? -0.25 : 0 })}
-                  className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 text-xs font-mono font-bold border border-slate-700 shadow-sm"
-                >
-                  (-0.25, -0.25)
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
       {/* Tab 3: Visuals and Toggles */}
       {activeTab === 'visuals' && (
-        <div className="space-y-3.5 text-xs text-slate-300">
+        <div className="space-y-3.5 text-xs text-slate-300 flex-1">
           {/* 2D Specific Toggles */}
           {!is3D && (
             <>
