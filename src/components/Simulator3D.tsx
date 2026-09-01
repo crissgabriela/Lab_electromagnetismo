@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointCharge, TestPoint, SimulationSettings, TotalCalculation } from '../types';
 import { calculateElectricFieldAt, formatPhysicsValue } from '../utils/physics';
-import { RotateCcw, Box, Eye, Sparkles, Crosshair } from 'lucide-react';
+import { RotateCcw, Box, Eye, Crosshair, Compass, Zap, Layers } from 'lucide-react';
 
 interface Simulator3DProps {
   charges: PointCharge[];
@@ -31,6 +31,11 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
   const controlsRef = useRef<OrbitControls | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
 
+  const tpX = testPoint?.x ?? 0;
+  const tpY = testPoint?.y ?? 0;
+  const tpZ = testPoint?.z ?? 0;
+  const sci = settings.scientificNotation;
+
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
@@ -40,7 +45,7 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
 
     // 1. Scene & Camera
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x07090e); // Sleek dark slate
+    scene.background = new THREE.Color(0x07090e);
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
     camera.position.set(2.8, 2.4, 3.2);
@@ -79,7 +84,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
       gridHelper.position.y = -0.001;
       scene.add(gridHelper);
 
-      // Coordinate axes
       const axesHelper = new THREE.AxesHelper(1.5);
       scene.add(axesHelper);
     }
@@ -94,7 +98,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
 
       const radius = 0.09 + Math.min(0.06, Math.abs(c.q) * 0.02);
 
-      // Sphere Geometry
       const geometry = new THREE.SphereGeometry(radius, 32, 32);
       const material = new THREE.MeshStandardMaterial({
         color: color,
@@ -108,7 +111,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
       mesh.position.set(c.x, c.y, c.z || 0);
       chargeGroup.add(mesh);
 
-      // Outer glow shell
       const glowGeo = new THREE.SphereGeometry(radius * 1.35, 16, 16);
       const glowMat = new THREE.MeshBasicMaterial({
         color: color,
@@ -120,7 +122,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
       glowMesh.position.set(c.x, c.y, c.z || 0);
       chargeGroup.add(glowMesh);
 
-      // Small point light for physical illumination
       const pLight = new THREE.PointLight(color, 0.8, 1.8);
       pLight.position.set(c.x, c.y, c.z || 0);
       chargeGroup.add(pLight);
@@ -129,11 +130,11 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
 
     // 7. Test Point Mesh
     const testPointGroup = new THREE.Group();
-    const tpPos = new THREE.Vector3(testPoint.x, testPoint.y, testPoint.z || 0);
+    const tpPos = new THREE.Vector3(tpX, tpY, tpZ);
 
     const tpGeo = new THREE.SphereGeometry(0.065, 24, 24);
     const tpMat = new THREE.MeshStandardMaterial({
-      color: 0xf59e0b, // Amber
+      color: 0xf59e0b,
       emissive: 0xd97706,
       emissiveIntensity: 0.7,
       roughness: 0.1,
@@ -143,7 +144,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
     tpMesh.position.copy(tpPos);
     testPointGroup.add(tpMesh);
 
-    // Orbiting target ring around test point
     const ringGeo = new THREE.TorusGeometry(0.12, 0.008, 12, 32);
     const ringMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, opacity: 0.8 });
     const ringMesh = new THREE.Mesh(ringGeo, ringMat);
@@ -163,7 +163,7 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
         dir,
         tpPos,
         length,
-        0x10b981, // Emerald Green
+        0x10b981,
         0.18,
         0.09
       );
@@ -185,7 +185,7 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
       });
     }
 
-    // 10. 3D Vector Field Grid (Space lattice of field arrows)
+    // 10. 3D Vector Field Grid
     if (settings.showVectorGrid && charges.length > 0) {
       const density = 6;
       const span = 1.2;
@@ -194,7 +194,6 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
       for (let x = -span; x <= span; x += step) {
         for (let y = -span; y <= span; y += step) {
           for (let z = -span; z <= span; z += step) {
-            // Avoid drawing near charges
             let close = false;
             for (const c of charges) {
               const d = Math.sqrt((x - c.x) ** 2 + (y - c.y) ** 2 + (z - (c.z || 0)) ** 2);
@@ -213,8 +212,7 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
             const origin = new THREE.Vector3(x, y, z);
             const len = Math.min(0.22, Math.max(0.06, Math.log10(mag + 1) * 0.04));
 
-            // Intensity color
-            const arrowCol = 0x38bdf8; // Sky blue
+            const arrowCol = 0x38bdf8;
             const miniArrow = new THREE.ArrowHelper(dir, origin, len, arrowCol, len * 0.35, len * 0.2);
             scene.add(miniArrow);
           }
@@ -252,7 +250,7 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
         mount.removeChild(renderer.domElement);
       }
     };
-  }, [charges, testPoint, settings, calculation]);
+  }, [charges, testPoint, tpX, tpY, tpZ, settings, calculation]);
 
   const handleResetCamera = () => {
     if (cameraRef.current && controlsRef.current) {
@@ -276,71 +274,127 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[540px] md:h-[600px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl select-none">
+    <div className="relative w-full flex flex-col gap-3 select-none">
       {/* 3D Canvas Mount */}
-      <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
+      <div className="relative w-full h-[500px] md:h-[540px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+        <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
-      {/* Floating 3D Controls (Top Left) */}
-      <div className="absolute top-4 left-4 flex flex-col gap-2 bg-slate-900/80 backdrop-blur-md p-1.5 rounded-xl border border-slate-800/80 shadow-lg">
-        <button
-          onClick={handleResetCamera}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
-          title="Restablecer Cámara 3D"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => handlePresetView('xy')}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-mono font-bold transition"
-          title="Vista Frontal (Plano XY)"
-        >
-          XY
-        </button>
-        <button
-          onClick={() => handlePresetView('xz')}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-mono font-bold transition"
-          title="Vista Superior (Plano XZ)"
-        >
-          XZ
-        </button>
-        <button
-          onClick={() => handlePresetView('iso')}
-          className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
-          title="Vista Isométrica 3D"
-        >
-          <Box className="w-4 h-4" />
-        </button>
-      </div>
+        {/* Floating 3D Controls (Top Left) */}
+        <div className="absolute top-4 left-4 flex flex-col gap-2 bg-slate-900/85 backdrop-blur-md p-1.5 rounded-xl border border-slate-800/80 shadow-lg">
+          <button
+            onClick={handleResetCamera}
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+            title="Restablecer Cámara 3D"
+          >
+            <RotateCcw className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handlePresetView('xy')}
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-mono font-bold transition"
+            title="Vista Frontal (Plano XY)"
+          >
+            XY
+          </button>
+          <button
+            onClick={() => handlePresetView('xz')}
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 text-xs font-mono font-bold transition"
+            title="Vista Superior (Plano XZ)"
+          >
+            XZ
+          </button>
+          <button
+            onClick={() => handlePresetView('iso')}
+            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+            title="Vista Isométrica 3D"
+          >
+            <Box className="w-4 h-4" />
+          </button>
+        </div>
 
-      {/* 3D Origin Button (Top Right) */}
-      <div className="absolute top-4 right-4 flex items-center gap-2">
-        <button
-          onClick={() => onUpdateTestPointPos(0, 0, 0)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold backdrop-blur-md transition shadow-md"
-          title="Fijar Punto de Prueba en el Origen (0,0,0)"
-        >
-          <Crosshair className="w-3.5 h-3.5" />
-          Fijar P en (0,0,0)
-        </button>
-      </div>
+        {/* 3D Origin Button (Top Right) */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <button
+            onClick={() => onUpdateTestPointPos(0, 0, 0)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-semibold backdrop-blur-md transition shadow-md"
+            title="Fijar Punto de Prueba en el Origen (0,0,0)"
+          >
+            <Crosshair className="w-3.5 h-3.5" />
+            Fijar P en (0,0,0)
+          </button>
+        </div>
 
-      {/* Legend & 3D Hints Bar (Bottom) */}
-      <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2 px-4 py-2 rounded-xl bg-slate-900/85 backdrop-blur-md border border-slate-800 text-xs text-slate-300 shadow-xl font-mono">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 text-slate-400">
-            <Eye className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Espacio 3D:</span>
+        {/* Legend & 3D Hints Bar (Bottom) */}
+        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-slate-900/80 backdrop-blur-md border border-slate-800/80 text-[11px] text-slate-400 font-mono">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-slate-400">
+              <Eye className="w-3 h-3 text-indigo-400" />
+              <span>3D:</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="inline-block w-2 h-2 rounded-full bg-red-500" /> Carga (+)
+              <span className="inline-block w-2 h-2 rounded-full bg-blue-500 ml-1.5" /> Carga (-)
+              <span className="inline-block w-2 h-2 rounded-full bg-amber-500 ml-1.5" /> Punto P
+              <span className="inline-block w-3 h-1 rounded bg-emerald-500 ml-1.5" /> Vector E⃗
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" /> Carga (+)
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ml-2" /> Carga (-)
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ml-2" /> Punto P (r₀)
-            <span className="inline-block w-3.5 h-1.5 rounded bg-emerald-500 ml-2" /> Vector E⃗_total
+
+          <div className="text-[10px] text-slate-500 hidden sm:inline">
+            Rotar: Clic Izq • Desplazar: Clic Der • Zoom: Rueda
+          </div>
+        </div>
+      </div>
+
+      {/* Prominent High-Contrast Punto P HUD Display Card (3D) */}
+      <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-xl grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Metric 1: Position */}
+        <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-lg border border-amber-500/30">
+          <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 shrink-0">
+            <Compass className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-amber-400 uppercase tracking-wider">
+              Punto de Prueba (r₀)
+            </div>
+            <div className="text-sm font-bold font-mono text-slate-100">
+              ({tpX.toFixed(2)}, {tpY.toFixed(2)}, {tpZ.toFixed(2)}) m
+            </div>
           </div>
         </div>
 
-        <div className="text-[11px] text-slate-500">
-          Clic izquierdo: Rotar • Clic derecho: Mover • Rueda: Zoom
+        {/* Metric 2: Electric Field at P */}
+        <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-lg border border-emerald-500/30">
+          <div className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 shrink-0">
+            <Zap className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider">
+              Campo Eléctrico E⃗(r₀)
+            </div>
+            <div className="text-sm font-bold font-mono text-emerald-300">
+              {formatPhysicsValue(calculation.totalFieldMagnitude, 'N/C', sci, 3)}
+            </div>
+            <div className="text-[10px] text-slate-400 font-mono">
+              E_z = {formatPhysicsValue(calculation.totalElectricField.z, '', sci, 2)}
+            </div>
+          </div>
+        </div>
+
+        {/* Metric 3: Electric Potential at P */}
+        <div className="flex items-center gap-3 bg-slate-950/70 p-3 rounded-lg border border-cyan-500/30">
+          <div className="p-2 rounded-lg bg-cyan-500/20 text-cyan-400 shrink-0">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold text-cyan-400 uppercase tracking-wider">
+              Potencial Eléctrico V(r₀)
+            </div>
+            <div className="text-sm font-bold font-mono text-cyan-300">
+              {formatPhysicsValue(calculation.totalPotential, 'V', sci, 3)}
+            </div>
+            <div className="text-[10px] text-slate-400">
+              {calculation.totalPotential > 0 ? '+ Positivo' : calculation.totalPotential < 0 ? '- Negativo' : '0 Nulo'}
+            </div>
+          </div>
         </div>
       </div>
     </div>

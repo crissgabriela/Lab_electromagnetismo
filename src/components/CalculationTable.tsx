@@ -141,9 +141,13 @@ export const CalculationTable: React.FC<CalculationTableProps> = ({
   };
 
   const handleCopySummary = () => {
+    const tpX = testPoint?.x ?? 0;
+    const tpY = testPoint?.y ?? 0;
+    const tpZ = testPoint?.z ?? 0;
+
     const pointStr = is3D 
-      ? `(${testPoint.x.toFixed(3)}, ${testPoint.y.toFixed(3)}, ${testPoint.z.toFixed(3)}) m`
-      : `(${testPoint.x.toFixed(3)}, ${testPoint.y.toFixed(3)}) m`;
+      ? `(${tpX.toFixed(3)}, ${tpY.toFixed(3)}, ${tpZ.toFixed(3)}) m`
+      : `(${tpX.toFixed(3)}, ${tpY.toFixed(3)}) m`;
     
     const fieldVecStr = is3D
       ? `(${formatPhysicsValue(totalElectricField.x, '', sci, precision)}, ${formatPhysicsValue(totalElectricField.y, '', sci, precision)}, ${formatPhysicsValue(totalElectricField.z, '', sci, precision)}) N/C`
@@ -183,7 +187,7 @@ Número de Cargas: ${chargesCalculations.length}
             <p className="text-xs text-slate-400">
               Evaluación en el Punto de Prueba{' '}
               <span className="text-amber-400 font-mono font-medium">
-                r₀ = ({testPoint.x.toFixed(2)}, {testPoint.y.toFixed(2)}{is3D ? `, ${testPoint.z.toFixed(2)}` : ''}) m
+                r₀ = ({(testPoint?.x ?? 0).toFixed(2)}, {(testPoint?.y ?? 0).toFixed(2)}{is3D ? `, ${(testPoint?.z ?? 0).toFixed(2)}` : ''}) m
               </span>
             </p>
           </div>
@@ -351,7 +355,7 @@ Número de Cargas: ${chargesCalculations.length}
             </span>
           </div>
           <div className="text-sm font-mono text-slate-200">
-            r₀ = ({testPoint.x.toFixed(3)}, {testPoint.y.toFixed(3)}{is3D ? `, ${testPoint.z.toFixed(3)}` : ''}) m
+            r₀ = ({(testPoint?.x ?? 0).toFixed(3)}, {(testPoint?.y ?? 0).toFixed(3)}{is3D ? `, ${(testPoint?.z ?? 0).toFixed(3)}` : ''}) m
           </div>
           <div className="text-xs text-slate-400 pt-1 border-t border-indigo-500/10 space-y-1">
             <div className="flex items-center justify-between">

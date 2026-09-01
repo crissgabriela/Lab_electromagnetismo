@@ -381,7 +381,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </span>
               <button
                 onClick={() => onUpdateTestPoint({ x: 0, y: 0, z: 0 })}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-slate-700 transition"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 text-xs font-semibold border border-amber-500/40 transition shadow-sm"
               >
                 <RotateCcw className="w-3 h-3" />
                 Origen (0,0)
@@ -398,10 +398,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <input
                   type="number"
                   step="0.05"
-                  value={testPoint.x}
+                  value={testPoint?.x ?? 0}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    onUpdateTestPoint({ ...testPoint, x: val });
+                    const val = parseFloat(e.target.value);
+                    onUpdateTestPoint({
+                      x: isNaN(val) ? 0 : val,
+                      y: testPoint?.y ?? 0,
+                      z: testPoint?.z ?? 0,
+                    });
                   }}
                   className="w-full bg-slate-800 text-slate-100 px-2 py-1.5 rounded-lg border border-slate-700 text-center font-semibold focus:border-amber-500 focus:outline-none"
                 />
@@ -412,10 +416,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 <input
                   type="number"
                   step="0.05"
-                  value={testPoint.y}
+                  value={testPoint?.y ?? 0}
                   onChange={(e) => {
-                    const val = parseFloat(e.target.value) || 0;
-                    onUpdateTestPoint({ ...testPoint, y: val });
+                    const val = parseFloat(e.target.value);
+                    onUpdateTestPoint({
+                      x: testPoint?.x ?? 0,
+                      y: isNaN(val) ? 0 : val,
+                      z: testPoint?.z ?? 0,
+                    });
                   }}
                   className="w-full bg-slate-800 text-slate-100 px-2 py-1.5 rounded-lg border border-slate-700 text-center font-semibold focus:border-amber-500 focus:outline-none"
                 />
@@ -427,10 +435,14 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   <input
                     type="number"
                     step="0.05"
-                    value={testPoint.z}
+                    value={testPoint?.z ?? 0}
                     onChange={(e) => {
-                      const val = parseFloat(e.target.value) || 0;
-                      onUpdateTestPoint({ ...testPoint, z: val });
+                      const val = parseFloat(e.target.value);
+                      onUpdateTestPoint({
+                        x: testPoint?.x ?? 0,
+                        y: testPoint?.y ?? 0,
+                        z: isNaN(val) ? 0 : val,
+                      });
                     }}
                     className="w-full bg-slate-800 text-slate-100 px-2 py-1.5 rounded-lg border border-slate-700 text-center font-semibold focus:border-amber-500 focus:outline-none"
                   />
@@ -443,6 +455,37 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Quick Position Chips */}
+            <div className="pt-2 border-t border-slate-800/80 space-y-1.5">
+              <span className="text-[11px] text-slate-400 font-medium block">Atajos de posición:</span>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => onUpdateTestPoint({ x: 0, y: 0, z: 0 })}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700"
+                >
+                  (0.00, 0.00)
+                </button>
+                <button
+                  onClick={() => onUpdateTestPoint({ x: 0, y: 0.5, z: is3D ? testPoint?.z ?? 0 : 0 })}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700"
+                >
+                  (0.00, 0.50)
+                </button>
+                <button
+                  onClick={() => onUpdateTestPoint({ x: 0.5, y: 0, z: is3D ? testPoint?.z ?? 0 : 0 })}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700"
+                >
+                  (0.50, 0.00)
+                </button>
+                <button
+                  onClick={() => onUpdateTestPoint({ x: 0.25, y: 0.25, z: is3D ? 0.25 : 0 })}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono border border-slate-700"
+                >
+                  (0.25, 0.25)
+                </button>
+              </div>
             </div>
           </div>
         </div>

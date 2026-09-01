@@ -56,16 +56,6 @@ export const Navbar: React.FC<NavbarProps> = () => {
               <BookOpen className="w-4 h-4" />
               <span>Guía del Laboratorio</span>
             </button>
-
-            <a
-              href="https://github.com/crissgabriela/Lab_electromagnetismo"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition"
-            >
-              <Github className="w-4 h-4" />
-              <span className="hidden sm:inline">GitHub</span>
-            </a>
           </div>
         </div>
       </header>
