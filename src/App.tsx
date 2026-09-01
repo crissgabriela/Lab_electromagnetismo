@@ -109,11 +109,11 @@ export function App() {
       <Navbar />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-[1720px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Top Grid: Canvas Simulator + Controls */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 xl:grid-cols-12 gap-6 items-start">
           {/* Simulator Viewport (2D or 3D) */}
-          <div className="lg:col-span-8 space-y-3">
+          <div className="lg:col-span-8 xl:col-span-8 2xl:col-span-9 space-y-3">
             {settings.dimension === '2D' ? (
               <Simulator2D
                 charges={charges}
@@ -139,7 +139,7 @@ export function App() {
           </div>
 
           {/* Control & Configuration Panel */}
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-4 xl:col-span-4 2xl:col-span-3">
             <ControlPanel
               charges={charges}
               testPoint={testPoint}

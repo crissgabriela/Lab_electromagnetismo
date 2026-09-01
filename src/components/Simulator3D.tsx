@@ -241,9 +241,16 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
     };
     window.addEventListener('resize', handleResize);
 
+    const handleNativeWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+    mount.addEventListener('wheel', handleNativeWheel, { passive: false });
+
     return () => {
       cancelAnimationFrame(animationFrameId);
       window.removeEventListener('resize', handleResize);
+      mount.removeEventListener('wheel', handleNativeWheel);
       controls.dispose();
       renderer.dispose();
       if (mount.contains(renderer.domElement)) {
@@ -274,9 +281,9 @@ export const Simulator3D: React.FC<Simulator3DProps> = ({
   };
 
   return (
-    <div className="relative w-full flex flex-col gap-3 select-none">
+    <div className="relative w-full flex flex-col gap-3.5 select-none">
       {/* 3D Canvas Mount */}
-      <div className="relative w-full h-[500px] md:h-[540px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+      <div className="relative w-full h-[560px] md:h-[620px] lg:h-[680px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
         <div ref={mountRef} className="w-full h-full cursor-grab active:cursor-grabbing" />
 
         {/* Floating 3D Controls (Top Left) */}

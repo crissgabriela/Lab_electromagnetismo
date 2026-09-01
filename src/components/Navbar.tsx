@@ -24,8 +24,8 @@ export const Navbar: React.FC<NavbarProps> = () => {
 
   return (
     <>
-      <header className="bg-slate-900/90 border-b border-slate-800/80 backdrop-blur-xl sticky top-0 z-40 px-4 lg:px-8 py-3.5 shadow-lg">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <header className="bg-slate-900/90 border-b border-slate-800/80 backdrop-blur-xl sticky top-0 z-40 px-4 sm:px-6 lg:px-8 py-3.5 shadow-lg">
+        <div className="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-4">
           {/* Logo & Lab Title */}
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-gradient-to-br from-indigo-600 to-blue-600 text-white shadow-lg shadow-indigo-500/25 ring-1 ring-white/20">
