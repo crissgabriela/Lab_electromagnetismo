@@ -498,7 +498,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           {!is3D && (
             <>
               <label className="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-slate-700 cursor-pointer">
-                <span>Líneas de Campo Eléctrico</span>
+                <span className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block" />
+                  Líneas de Campo Eléctrico (Cian)
+                </span>
                 <input
                   type="checkbox"
                   checked={settings.showFieldLines}
@@ -520,7 +523,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           )}
 
           <label className="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <span>Malla Vectorial del Campo</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block" />
+              Malla Vectorial del Campo (Violeta)
+            </span>
             <input
               type="checkbox"
               checked={settings.showVectorGrid}
@@ -530,7 +536,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           </label>
 
           <label className="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <span>Vector Campo Total E⃗ (Verde)</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" />
+              Vector Campo Total E (Verde)
+            </span>
             <input
               type="checkbox"
               checked={settings.showTotalVector}
@@ -540,7 +549,10 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           </label>
 
           <label className="flex items-center justify-between p-2 rounded-xl bg-slate-950/40 border border-slate-800 hover:border-slate-700 cursor-pointer">
-            <span>Vectores Individuales E⃗ᵢ (Rojo/Azul)</span>
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-400 inline-block" />
+              Vectores Individuales E_i (Rojo/Azul)
+            </span>
             <input
               type="checkbox"
               checked={settings.showIndividualVectors}
