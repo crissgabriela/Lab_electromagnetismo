@@ -340,7 +340,6 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
 
           const intensity = Math.min(1, Math.log10(mag + 1) / 6);
           const alpha = 0.55 + intensity * 0.45;
-          // Distinct Electric Violet / Lavender-Purple for Vector Grid
           ctx.strokeStyle = `rgba(168, 85, 247, ${alpha})`;
           ctx.fillStyle = `rgba(192, 132, 252, ${alpha})`;
           ctx.lineWidth = 2.2;
@@ -423,7 +422,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       });
     }
 
-    // 5. Draw Individual Charge Contribution Field Vectors at Test Point (Longer & Clearer)
+    // 5. Draw Individual Charge Contribution Field Vectors at Test Point (Smart Non-overlapping Placement)
     const { px: tpPx, py: tpPy } = mathToPixel(tpX, tpY, width, height);
 
     if (settings.showIndividualVectors && calculation.chargesCalculations.length > 0) {
@@ -469,13 +468,14 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         ctx.closePath();
         ctx.fill();
 
-        // Vector Label Pill (Positioned cleanly beyond the arrowhead)
+        // Vector Label Pill with staggered offset to prevent overlapping
         const vecLabel = `E_${calc.charge.name || `q${idx + 1}`}`;
         ctx.font = 'bold 14px "JetBrains Mono", monospace';
         const lblW = ctx.measureText(vecLabel).width;
 
-        const lblX = endX + Math.cos(dirAngle) * 16;
-        const lblY = endY + Math.sin(dirAngle) * 16;
+        const offsetDist = 18 + (idx % 3) * 14;
+        const lblX = endX + Math.cos(dirAngle) * offsetDist;
+        const lblY = endY + Math.sin(dirAngle) * offsetDist;
 
         ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
         ctx.strokeStyle = isPos ? '#ef4444' : '#3b82f6';
@@ -493,7 +493,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       });
     }
 
-    // 6. Draw Total Net Electric Field Vector E_total at Test Point (Long & Impressive)
+    // 6. Draw Total Net Electric Field Vector E_total at Test Point
     if (settings.showTotalVector && calculation.totalFieldMagnitude > 1e-12) {
       const vScale = (settings.vectorScale || 1.0) * 0.00003;
       const arrowDx = calculation.totalElectricField.x * vScale;
@@ -539,8 +539,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.font = 'bold 15px "JetBrains Mono", monospace';
       const totW = ctx.measureText(totLabel).width;
 
-      const lblX = endX + Math.cos(dirAngle) * 18;
-      const lblY = endY + Math.sin(dirAngle) * 18;
+      const lblX = endX + Math.cos(dirAngle) * 20;
+      const lblY = endY + Math.sin(dirAngle) * 20;
 
       ctx.fillStyle = 'rgba(6, 78, 59, 0.95)';
       ctx.strokeStyle = '#10b981';
@@ -580,7 +580,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // Clean Floating Tag Pill for Point P (14px font)
+    // Clean Floating Tag Pill for Point P (14px font, positioned above reticle)
     const pTag = 'P (r₀)';
     ctx.font = 'bold 14px Inter, sans-serif';
     const tagW = ctx.measureText(pTag).width;
@@ -598,7 +598,7 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
     ctx.fillText(pTag, tpPx, tpPy - 24);
     ctx.restore();
 
-    // 8. Draw Point Charges (15% Smaller Circles: ~14.5px base radius)
+    // 8. Draw Point Charges (With Smart Dynamic Label Clearance)
     charges.forEach((c) => {
       const { px, py } = mathToPixel(c.x, c.y, width, height);
       const isPos = c.q > 0;
@@ -655,24 +655,28 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ctx.textBaseline = 'middle';
       ctx.fillText(isPos ? '+' : isNeg ? '−' : '0', px, py);
 
-      // Charge Name & Value Label Card (14px bold font)
+      // Charge Name & Value Label Card (Dynamic clearance above/below)
       if (settings.showLabels) {
         const cLabel = `${c.name || 'q'}: ${c.q > 0 ? `+${c.q}` : c.q} ${c.unit}`;
         ctx.font = 'bold 14px "JetBrains Mono", monospace';
         const cTextWidth = ctx.measureText(cLabel).width;
 
+        // Place label above if in upper half of view, below if in lower half to prevent overlap
+        const placeAbove = c.y >= 0.2;
+        const labelY = placeAbove ? py - baseRadius - 18 : py + baseRadius + 6;
+
         ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
         ctx.strokeStyle = isPos ? 'rgba(239, 68, 68, 0.7)' : 'rgba(59, 130, 246, 0.7)';
         ctx.lineWidth = 1.3;
         ctx.beginPath();
-        ctx.roundRect(px - cTextWidth / 2 - 8, py + baseRadius + 6, cTextWidth + 16, 23, 5);
+        ctx.roundRect(px - cTextWidth / 2 - 8, labelY, cTextWidth + 16, 23, 5);
         ctx.fill();
         ctx.stroke();
 
         ctx.fillStyle = '#ffffff';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(cLabel, px, py + baseRadius + 17);
+        ctx.fillText(cLabel, px, labelY + 11.5);
       }
 
       ctx.restore();
@@ -799,8 +803,8 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
       ref={containerRef}
       className="relative w-full flex flex-col gap-4 select-none"
     >
-      {/* 2D Canvas Viewport with Expanded Height */}
-      <div className="relative w-full h-[560px] md:h-[620px] lg:h-[680px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
+      {/* 2D Canvas Viewport (Significantly Enlarged Height: 640px to 800px) */}
+      <div className="relative w-full h-[620px] md:h-[700px] lg:h-[760px] xl:h-[800px] bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 shadow-2xl">
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}
@@ -815,21 +819,21 @@ export const Simulator2D: React.FC<Simulator2DProps> = ({
         <div className="absolute top-4 left-4 flex flex-col gap-2 bg-slate-900/85 backdrop-blur-md p-1.5 rounded-xl border border-slate-800/80 shadow-lg">
           <button
             onClick={() => setZoom((z) => Math.min(3.5, z * 1.15))}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+            className="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
             title="Acercar (Zoom In)"
           >
             <ZoomIn className="w-4 h-4" />
           </button>
           <button
             onClick={() => setZoom((z) => Math.max(0.35, z / 1.15))}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+            className="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
             title="Alejar (Zoom Out)"
           >
             <ZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={handleResetView}
-            className="p-2 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
+            className="p-2.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
             title="Centrar y reajustar vista"
           >
             <RotateCcw className="w-4 h-4" />
